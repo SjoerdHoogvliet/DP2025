@@ -1,7 +1,10 @@
+import reiziger.Reiziger;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDate;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,19 +17,14 @@ public class Main {
 
             System.out.println("Alle reizigers:");
             while(results.next()) {
-                String naam = "";
-                naam += results.getString("voorletters") + ". ";
-                if (results.getString("tussenvoegsel") != null) {
-                    naam += results.getString("tussenvoegsel") + " ";
-                }
-                naam += results.getString("achternaam");
-
-                String returnString = "#%d %s (%s)".formatted(
+                Reiziger reiziger = new Reiziger(
                     results.getInt("reiziger_id"),
-                    naam,
-                    results.getString("geboortedatum")
+                    results.getString("voorletters"),
+                    results.getString("tussenvoegsel"),
+                    results.getString("achternaam"),
+                    LocalDate.parse(results.getString("geboortedatum"))
                 );
-                System.out.println(returnString);
+                System.out.println(reiziger);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
