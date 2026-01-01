@@ -2,13 +2,17 @@ package reiziger;
 
 import java.time.LocalDate;
 
+import adres.Adres;
+
 public class Reiziger {
     private Integer reiziger_id;
     private String voorletters;
     private String tussenvoegsel;
     private String achternaam;
     private LocalDate geboortedatum;
+    private Adres adres;
 
+    // Adres not in constructor as it is a 0..1 relationship, meaning there are reizigers without an adres
     public Reiziger(Integer reiziger_id, String voorletters, String tussenvoegsel, String achternaam, LocalDate geboortedatum) {
         this.reiziger_id = reiziger_id;
         this.voorletters = voorletters;
@@ -80,5 +84,13 @@ public class Reiziger {
 
     public void setGeboortedatum(LocalDate geboortedatum) {
         this.geboortedatum = geboortedatum;
+    }
+
+    public Adres getAdres() {
+        return adres;
+    }
+
+    public void setAdres(Adres adres) {
+        this.adres = adres;
     }
 }

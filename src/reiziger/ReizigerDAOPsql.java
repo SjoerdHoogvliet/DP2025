@@ -5,23 +5,33 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import adres.AdresDAO;
+
 public class ReizigerDAOPsql implements ReizigerDAO {
     private Connection connection;
+    private AdresDAO adresDAO;
 
     public ReizigerDAOPsql(Connection connection) {
         this.connection = connection;
     }
 
     @Override
+    public void setAdresDAO(AdresDAO adresDAO) {
+        this.adresDAO = adresDAO;
+    }
+
+    @Override
     public boolean save(Reiziger reiziger) {
         try {
-            String query = "INSERT INTO reiziger (reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum) VALUES (?, ?, ?, ?, ?)";
+            String query = "INSERT INTO reiziger (reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum, adres_id) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, reiziger.getReiziger_id());
             statement.setString(2, reiziger.getVoorletters());
             statement.setString(3, reiziger.getTussenvoegsel());
             statement.setString(4, reiziger.getAchternaam());
             statement.setDate(5, Date.valueOf(reiziger.getGeboortedatum()));
+            // If the reiziger has no adres, set the adres_id to null, otherwise set it to the adres_id of the adres
+            statement.setInt(6, reiziger.getAdres() == null ? null : reiziger.getAdres().getAdres_id());
             statement.executeUpdate();
             statement.close();
             return true;
@@ -35,13 +45,15 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean update(Reiziger reiziger) {
         try {
-            String query = "UPDATE reiziger SET voorletters = ?, tussenvoegsel = ?, achternaam = ?, geboortedatum = ? WHERE reiziger_id = ?";
+            String query = "UPDATE reiziger SET voorletters = ?, tussenvoegsel = ?, achternaam = ?, geboortedatum = ?, adres_id = ? WHERE reiziger_id = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, reiziger.getVoorletters());
             statement.setString(2, reiziger.getTussenvoegsel());
             statement.setString(3, reiziger.getAchternaam());
             statement.setDate(4, Date.valueOf(reiziger.getGeboortedatum()));
             statement.setInt(5, reiziger.getReiziger_id());
+            // If the reiziger has no adres, set the adres_id to null, otherwise set it to the adres_id of the adres
+            statement.setInt(6, reiziger.getAdres() == null ? null : reiziger.getAdres().getAdres_id());
             statement.executeUpdate();
             statement.close();
             return true;
@@ -84,6 +96,12 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         results.getString("achternaam"),
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
+
+                // If the reiziger has an adres, get the adres_id and set it to the adres
+                if (results.getInt("adres_id") != 0) {
+                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
+                }
+
                 results.close();
                 statement.close();
                 return reiziger;
@@ -113,6 +131,12 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         results.getString("achternaam"),
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
+                
+                // If the reiziger has an adres, get the adres_id and set it to the adres
+                if (results.getInt("adres_id") != 0) {
+                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
+                }
+
                 reizigers.add(reiziger);
             }
             results.close();
@@ -142,6 +166,13 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         results.getString("achternaam"),
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
+
+                // TODO: Currently returning an error due to no column called adres_id being available (as no reiziger has an adres_id currently)
+                // If the reiziger has an adres, get the adres_id and set it to the adres
+                if (results.getInt("adres_id") != 0) {
+                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
+                }
+
                 reizigers.add(reiziger);
             }
             results.close();
