@@ -17,6 +17,14 @@ public class Reiziger {
         this.geboortedatum = geboortedatum;
     }
 
+    // Insertion friendly contructor?
+    public Reiziger(String voorletters, String tussenvoegsel, String achternaam, LocalDate geboortedatum) {
+        this.voorletters = voorletters;
+        this.tussenvoegsel = tussenvoegsel;
+        this.achternaam = achternaam;
+        this.geboortedatum = geboortedatum;
+    }
+
     public String getNaam() {
         String naam = "";
         naam += voorletters + ". ";
