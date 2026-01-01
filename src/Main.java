@@ -8,23 +8,44 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
+import adres.Adres;
+import adres.AdresDAO;
+import adres.AdresDAOPsql;
+
 public class Main {
-    public Connection getConnection() {
+    public static void main(String[] args) {
+        try {
+            Connection connection = getConnection();
+            // Creating the Data Access Objects
+            ReizigerDAO reizigerDAO = new ReizigerDAOPsql(connection);
+            AdresDAO adresDAO = new AdresDAOPsql(connection);
+
+            // Assigning related DAOs to each other
+            reizigerDAO.setAdresDAO(adresDAO);
+            adresDAO.setReizigerDAO(reizigerDAO);
+
+            // Testing the DAOs
+            testReizigerDAO(reizigerDAO);
+            testAdresDAO(adresDAO, reizigerDAO);
+            Main.closeConnection(connection);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static Connection getConnection() {
         try {
             return DriverManager.getConnection("jdbc:postgresql://localhost:5434/ovchip25", "postgres", "padmin");
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
-    public static void main(String[] args) {
+    private static void closeConnection(Connection connection) {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5434/ovchip25", "postgres", "padmin");
-            ReizigerDAO reizigerDAO = new ReizigerDAOPsql(connection);
-
-            testReizigerDAO(reizigerDAO);
             connection.close();
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -86,5 +107,53 @@ public class Main {
         for (Reiziger r : reizigers) {
             System.out.println(r);
         }
+    }
+
+    /**
+     * P3. Adres DAO: persistentie van een klasse
+     *
+     * Deze methode test de CRUD-functionaliteit van de Adres DAO
+     *
+     * @throws SQLException
+     */
+    private static void testAdresDAO(AdresDAO adresDAO, ReizigerDAO reizigerDAO) throws SQLException {
+        System.out.println("\n---------- Test AdresDAO -------------");
+
+        // Haal alle adressen op uit de database
+        List<Adres> adressen = adresDAO.findAll();
+        System.out.println("[Test] AdresDAO.findAll() geeft de volgende adressen:");
+        for (Adres a : adressen) {
+            System.out.println(a);
+        }
+        System.out.println();
+
+        // Breng Sietske terug in leven
+        String gbdatum = "1981-03-14";
+        Reiziger sietske = new Reiziger(77, "S", "", "Boers", LocalDate.parse(gbdatum));
+        reizigerDAO.save(sietske);
+
+        // Maak een nieuwe adres aan en persisteer deze in de database
+        Adres sietskeAdres = new Adres(77, "3332KS", "7", "Volgerland", "Zwijndrecht", sietske);
+        sietske.setAdres(sietskeAdres);
+        System.out.print("[Test] Eerst " + adressen.size() + " adressen, na AdresDAO.save() ");
+        adresDAO.save(sietskeAdres);
+        adressen = adresDAO.findAll();
+        System.out.println(adressen.size() + " adressen");
+
+        // Update test door het sietske object aan te passen en opnieuw te persisteren.
+        sietskeAdres.setStraat("Nieuwstraat");
+        System.out.println("[Test] Oud Sietske adres: " + adresDAO.findById(sietskeAdres.getAdres_id()));
+        adresDAO.update(sietskeAdres);
+        System.out.println("[Test] Nieuw Sietske adres: " + adresDAO.findById(sietskeAdres.getAdres_id()));
+
+        // Haal het adres van sietske op
+        Adres adresFromSietske = adresDAO.findByReiziger(sietske);
+        System.out.println("[Test] Het adres van Sietske: " + adresFromSietske);
+        System.out.println();
+
+        // Verwijder sietske uit de database
+        System.out.println("[Test] Aantal adressen voor delete: " + adresDAO.findAll().size());
+        adresDAO.delete(sietskeAdres);
+        System.out.println("[Test] Aantal adressen na delete: " + adresDAO.findAll().size());
     }
 }
