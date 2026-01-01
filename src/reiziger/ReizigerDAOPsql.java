@@ -15,12 +15,13 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean save(Reiziger reiziger) {
         try {
-            String query = "INSERT INTO reiziger (voorletters, tussenvoegsel, achternaam, geboortedatum) VALUES (?, ?, ?, ?)";
+            String query = "INSERT INTO reiziger (reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, reiziger.getVoorletters());
-            statement.setString(2, reiziger.getTussenvoegsel());
-            statement.setString(3, reiziger.getAchternaam());
-            statement.setString(4, reiziger.getGeboortedatum().toString());
+            statement.setInt(1, reiziger.getReiziger_id());
+            statement.setString(2, reiziger.getVoorletters());
+            statement.setString(3, reiziger.getTussenvoegsel());
+            statement.setString(4, reiziger.getAchternaam());
+            statement.setDate(5, Date.valueOf(reiziger.getGeboortedatum()));
             statement.executeUpdate();
             statement.close();
             return true;
@@ -33,12 +34,38 @@ public class ReizigerDAOPsql implements ReizigerDAO {
 
     @Override
     public boolean update(Reiziger reiziger) {
-        return false;
+        try {
+            String query = "UPDATE reiziger SET voorletters = ?, tussenvoegsel = ?, achternaam = ?, geboortedatum = ? WHERE reiziger_id = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, reiziger.getVoorletters());
+            statement.setString(2, reiziger.getTussenvoegsel());
+            statement.setString(3, reiziger.getAchternaam());
+            statement.setDate(4, Date.valueOf(reiziger.getGeboortedatum()));
+            statement.setInt(5, reiziger.getReiziger_id());
+            statement.executeUpdate();
+            statement.close();
+            return true;
+        } catch (Exception e) {
+            System.err.println("[ReizigerDAOPsql.update] " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
     public boolean delete(Reiziger reiziger) {
-        return false;
+        try {
+            String query = "DELETE FROM reiziger WHERE reiziger_id = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, reiziger.getReiziger_id());
+            statement.executeUpdate();
+            statement.close();
+            return true;
+        } catch (Exception e) {
+            System.err.println("[ReizigerDAOPsql.delete] " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -49,7 +76,6 @@ public class ReizigerDAOPsql implements ReizigerDAO {
             statement.setInt(1, reiziger_id);
             ResultSet results = statement.executeQuery();
 
-            // TODO: Somehow this returns a warning/error that i should call next
             if(results.next()) {
                 Reiziger reiziger = new Reiziger(
                         results.getInt("reiziger_id"),
@@ -68,6 +94,36 @@ public class ReizigerDAOPsql implements ReizigerDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<Reiziger> findByGbdatum(LocalDate geboortedatum) {
+        try {
+            String query = "SELECT * FROM reiziger WHERE geboortedatum = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setDate(1, Date.valueOf(geboortedatum));
+            ResultSet results = statement.executeQuery();
+
+            List<Reiziger> reizigers = new ArrayList<>();
+            while (results.next()) {
+                Reiziger reiziger = new Reiziger(
+                        results.getInt("reiziger_id"),
+                        results.getString("voorletters"),
+                        results.getString("tussenvoegsel"),
+                        results.getString("achternaam"),
+                        LocalDate.parse(results.getString("geboortedatum"))
+                );
+                reizigers.add(reiziger);
+            }
+            results.close();
+            statement.close();
+
+            return reizigers;
+        } catch (Exception e) {
+            System.err.println("[ReizigerDAOPsql.findByGbdatum] " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
