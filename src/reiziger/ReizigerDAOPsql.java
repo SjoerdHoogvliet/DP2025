@@ -23,15 +23,13 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean save(Reiziger reiziger) {
         try {
-            String query = "INSERT INTO reiziger (reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum, adres_id) VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO reiziger (reiziger_id, voorletters, tussenvoegsel, achternaam, geboortedatum) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, reiziger.getReiziger_id());
             statement.setString(2, reiziger.getVoorletters());
             statement.setString(3, reiziger.getTussenvoegsel());
             statement.setString(4, reiziger.getAchternaam());
             statement.setDate(5, Date.valueOf(reiziger.getGeboortedatum()));
-            // If the reiziger has no adres, set the adres_id to null, otherwise set it to the adres_id of the adres
-            statement.setInt(6, reiziger.getAdres() == null ? null : reiziger.getAdres().getAdres_id());
             statement.executeUpdate();
             statement.close();
             return true;
@@ -45,15 +43,14 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean update(Reiziger reiziger) {
         try {
-            String query = "UPDATE reiziger SET voorletters = ?, tussenvoegsel = ?, achternaam = ?, geboortedatum = ?, adres_id = ? WHERE reiziger_id = ?";
+            String query = "UPDATE reiziger SET voorletters = ?, tussenvoegsel = ?, achternaam = ?, geboortedatum = ? WHERE reiziger_id = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, reiziger.getVoorletters());
             statement.setString(2, reiziger.getTussenvoegsel());
             statement.setString(3, reiziger.getAchternaam());
             statement.setDate(4, Date.valueOf(reiziger.getGeboortedatum()));
             statement.setInt(5, reiziger.getReiziger_id());
-            // If the reiziger has no adres, set the adres_id to null, otherwise set it to the adres_id of the adres
-            statement.setInt(6, reiziger.getAdres() == null ? null : reiziger.getAdres().getAdres_id());
+
             statement.executeUpdate();
             statement.close();
             return true;
@@ -67,6 +64,11 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean delete(Reiziger reiziger) {
         try {
+            // Cascading style; delete the adres before deleting the reiziger
+            if(reiziger.getAdres() != null) {
+                adresDAO.delete(reiziger.getAdres());
+            }
+
             String query = "DELETE FROM reiziger WHERE reiziger_id = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, reiziger.getReiziger_id());
@@ -97,10 +99,7 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
 
-                // If the reiziger has an adres, get the adres_id and set it to the adres
-                if (results.getInt("adres_id") != 0) {
-                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
-                }
+                reiziger.setAdres(adresDAO.findByReiziger(reiziger));
 
                 results.close();
                 statement.close();
@@ -132,10 +131,7 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
                 
-                // If the reiziger has an adres, get the adres_id and set it to the adres
-                if (results.getInt("adres_id") != 0) {
-                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
-                }
+                reiziger.setAdres(adresDAO.findByReiziger(reiziger));
 
                 reizigers.add(reiziger);
             }
@@ -167,11 +163,8 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
 
-                // If the reiziger has an adres, get the adres_id and set it to the adres
-                if (results.getInt("adres_id") != 0) {
-                    reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
-                }
-
+                reiziger.setAdres(adresDAO.findByReiziger(reiziger));
+                
                 reizigers.add(reiziger);
             }
             results.close();
