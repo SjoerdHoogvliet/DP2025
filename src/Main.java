@@ -216,7 +216,6 @@ public class Main {
 
         // Verwijder de OV Chipkaart van Sietske uit de database
         System.out.println("[Test] Aantal ovchipkaarten voor delete: " + ovchipkaartDAO.findAll().size());
-        System.out.println();
 
         ovchipkaartDAO.delete(sietskeOVChipkaart);
         System.out.println("[Test] Aantal ovchipkaarten na delete: " + ovchipkaartDAO.findAll().size());
