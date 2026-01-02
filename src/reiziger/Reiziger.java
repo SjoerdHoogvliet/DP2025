@@ -37,11 +37,17 @@ public class Reiziger {
     }
 
     public String toString() {
-        return "#%d %s (%s)".formatted(
+        String returnString = "Reiziger #%d: %s (%s)".formatted(
             reiziger_id,
             this.getNaam(),
             geboortedatum
         );
+
+        if(this.getAdres() != null) {
+            returnString += "; " + this.getAdres();
+        }
+
+        return returnString;
     }
 
     //*** Get/Set ***//
