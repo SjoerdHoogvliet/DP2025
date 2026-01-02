@@ -155,5 +155,8 @@ public class Main {
         System.out.println("[Test] Aantal adressen voor delete: " + adresDAO.findAll().size());
         adresDAO.delete(sietskeAdres);
         System.out.println("[Test] Aantal adressen na delete: " + adresDAO.findAll().size());
+
+        // Clean the Database
+        reizigerDAO.delete(sietske);
     }
 }
