@@ -167,7 +167,6 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                         LocalDate.parse(results.getString("geboortedatum"))
                 );
 
-                // TODO: Currently returning an error due to no column called adres_id being available (as no reiziger has an adres_id currently)
                 // If the reiziger has an adres, get the adres_id and set it to the adres
                 if (results.getInt("adres_id") != 0) {
                     reiziger.setAdres(adresDAO.findById(results.getInt("adres_id")));
