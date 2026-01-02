@@ -20,7 +20,7 @@ public class Adres {
     }
 
     public String toString() {
-        return "Adres #d: %s %s %s %s".formatted(
+        return "Adres #%d: %s %s; %s %s".formatted(
             this.adres_id,
             this.straat,
             this.huisnummer,
