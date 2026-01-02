@@ -4,9 +4,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 import adres.AdresDAO;
+import ovchipkaart.OVChipkaartDAO;
 
 public interface ReizigerDAO {
     public void setAdresDAO(AdresDAO adresDAO);
+    public void setOVChipkaartDAO(OVChipkaartDAO ovchipkaartDAO);
     public boolean save(Reiziger reiziger);
     public boolean update(Reiziger reiziger);
     public boolean delete(Reiziger reiziger);

@@ -6,10 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import adres.AdresDAO;
+import ovchipkaart.OVChipkaart;
+import ovchipkaart.OVChipkaartDAO;
 
 public class ReizigerDAOPsql implements ReizigerDAO {
     private Connection connection;
     private AdresDAO adresDAO;
+    private OVChipkaartDAO ovchipkaartDAO;
 
     public ReizigerDAOPsql(Connection connection) {
         this.connection = connection;
@@ -18,6 +21,11 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public void setAdresDAO(AdresDAO adresDAO) {
         this.adresDAO = adresDAO;
+    }
+
+    @Override
+    public void setOVChipkaartDAO(OVChipkaartDAO ovchipkaartDAO) {
+        this.ovchipkaartDAO = ovchipkaartDAO;
     }
 
     @Override
@@ -64,9 +72,16 @@ public class ReizigerDAOPsql implements ReizigerDAO {
     @Override
     public boolean delete(Reiziger reiziger) {
         try {
-            // Cascading style; delete the adres before deleting the reiziger
+            // Cascading style; delete associated objects before deleting the reiziger
             if(reiziger.getAdres() != null) {
                 adresDAO.delete(reiziger.getAdres());
+            }
+
+            if(reiziger.getOVChipkaarten() != null) {
+                // Make a copy of the list to avoid concurrent modification exceptions
+                for (OVChipkaart ovChipkaart : new ArrayList<>(reiziger.getOVChipkaarten())) {
+                    ovchipkaartDAO.delete(ovChipkaart);
+                }
             }
 
             String query = "DELETE FROM reiziger WHERE reiziger_id = ?";
@@ -100,6 +115,7 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                 );
 
                 reiziger.setAdres(adresDAO.findByReiziger(reiziger));
+                reiziger.setOVChipkaarten(ovchipkaartDAO.findByReiziger(reiziger));
 
                 results.close();
                 statement.close();
@@ -132,6 +148,8 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                 );
                 
                 reiziger.setAdres(adresDAO.findByReiziger(reiziger));
+                reiziger.setOVChipkaarten(ovchipkaartDAO.findByReiziger(reiziger));
+
 
                 reizigers.add(reiziger);
             }
@@ -164,6 +182,7 @@ public class ReizigerDAOPsql implements ReizigerDAO {
                 );
 
                 reiziger.setAdres(adresDAO.findByReiziger(reiziger));
+                reiziger.setOVChipkaarten(ovchipkaartDAO.findByReiziger(reiziger));
                 
                 reizigers.add(reiziger);
             }

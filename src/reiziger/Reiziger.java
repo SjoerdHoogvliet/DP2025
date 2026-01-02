@@ -1,8 +1,11 @@
 package reiziger;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import adres.Adres;
+import ovchipkaart.OVChipkaart;
 
 public class Reiziger {
     private Integer reiziger_id;
@@ -11,6 +14,7 @@ public class Reiziger {
     private String achternaam;
     private LocalDate geboortedatum;
     private Adres adres;
+    private List<OVChipkaart> ovChipkaarten;
 
     // Adres not in constructor as it is a 0..1 relationship, meaning there are reizigers without an adres
     public Reiziger(Integer reiziger_id, String voorletters, String tussenvoegsel, String achternaam, LocalDate geboortedatum) {
@@ -47,7 +51,28 @@ public class Reiziger {
             returnString += "; " + this.getAdres();
         }
 
+        if (this.getOVChipkaarten() != null) {
+            returnString += "\nHeeft de volgende OV Chipkaarten:";
+            for (OVChipkaart ovchipkaart : this.getOVChipkaarten()) {
+                returnString += "\n" + ovchipkaart;
+            }
+        }
+
         return returnString;
+    }
+
+    // As we can have multiple OV Chipkaarten, add these functions to add and remove OV Chipkaarten without getting and setting the whole list
+    public void addOVChipkaart(OVChipkaart ovchipkaart) {
+        if(this.ovChipkaarten == null) {
+            this.ovChipkaarten = new ArrayList<>();
+        }
+        this.ovChipkaarten.add(ovchipkaart);
+    }
+
+    public void removeOVChipkaart(OVChipkaart ovchipkaart) {
+        if(this.ovChipkaarten != null) {
+            this.ovChipkaarten.remove(ovchipkaart);
+        }
     }
 
     //*** Get/Set ***//
@@ -98,5 +123,13 @@ public class Reiziger {
 
     public void setAdres(Adres adres) {
         this.adres = adres;
+    }
+
+    public List<OVChipkaart> getOVChipkaarten() {
+        return ovChipkaarten;
+    }
+
+    public void setOVChipkaarten(List<OVChipkaart> ovchipkaarten) {
+        this.ovChipkaarten = ovchipkaarten;
     }
 }
