@@ -142,9 +142,9 @@ public class Main {
 
         // Update test door het sietske object aan te passen en opnieuw te persisteren.
         sietskeAdres.setStraat("Nieuwstraat");
-        System.out.println("[Test] Oud Sietske adres: " + adresDAO.findById(sietskeAdres.getAdres_id()));
+        System.out.println("[Test] Oud adres #77: " + adresDAO.findById(77));
         adresDAO.update(sietskeAdres);
-        System.out.println("[Test] Nieuw Sietske adres: " + adresDAO.findById(sietskeAdres.getAdres_id()));
+        System.out.println("[Test] Nieuw adres #77: " + adresDAO.findById(77));
 
         // Haal het adres van sietske op
         Adres adresFromSietske = adresDAO.findByReiziger(sietske);
