@@ -35,7 +35,10 @@ public class AdresDAOPsql implements AdresDAO {
             statement.setInt(6, adres.getReiziger().getReiziger_id());
             statement.executeUpdate();
 
-            // TODO: Should reiziger also get an update here where the adres_id is set?
+            Reiziger reizigerToUpdate = adres.getReiziger();
+            // Usually the adres is already set, however by doing this we are certain
+            reizigerToUpdate.setAdres(adres);
+            reizigerDAO.update(reizigerToUpdate);
 
             statement.close();
             return true;
@@ -75,6 +78,11 @@ public class AdresDAOPsql implements AdresDAO {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, adres.getAdres_id());
             statement.executeUpdate();
+
+            Reiziger reizigerToUpdate = adres.getReiziger();
+            // Make sure there is no adres in reiziger anymore
+            reizigerToUpdate.setAdres(null);
+            reizigerDAO.update(reizigerToUpdate);
 
             statement.close();
             return true;
