@@ -14,7 +14,7 @@ public class Reiziger {
     private String achternaam;
     private LocalDate geboortedatum;
     private Adres adres;
-    private List<OVChipkaart> ovChipkaarten;
+    private List<OVChipkaart> ovChipkaarten = new ArrayList<> ();
 
     // Adres not in constructor as it is a 0..1 relationship, meaning there are reizigers without an adres
     public Reiziger(Integer reiziger_id, String voorletters, String tussenvoegsel, String achternaam, LocalDate geboortedatum) {
@@ -63,9 +63,6 @@ public class Reiziger {
 
     // As we can have multiple OV Chipkaarten, add these functions to add and remove OV Chipkaarten without getting and setting the whole list
     public void addOVChipkaart(OVChipkaart ovchipkaart) {
-        if(this.ovChipkaarten == null) {
-            this.ovChipkaarten = new ArrayList<>();
-        }
         this.ovChipkaarten.add(ovchipkaart);
     }
 
