@@ -119,7 +119,7 @@ public class Main {
     }
 
     /**
-     * P3. Adres DAO: persistentie van een klasse
+     * P3. Adres DAO: persistentie van een één op één relatie
      *
      * Deze methode test de CRUD-functionaliteit van de Adres DAO
      *
@@ -170,7 +170,7 @@ public class Main {
     }
 
     /**
-     * P4. OV Chipkaart DAO: persistentie van een klasse
+     * P4. OV Chipkaart DAO: persistentie van een één op veel relatie
      *
      * Deze methode test de CRUD-functionaliteit van de OV Chipkaart DAO
      *
