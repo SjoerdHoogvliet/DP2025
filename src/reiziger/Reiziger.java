@@ -63,13 +63,13 @@ public class Reiziger {
 
     // As we can have multiple OV Chipkaarten, add these functions to add and remove OV Chipkaarten without getting and setting the whole list
     public void addOVChipkaart(OVChipkaart ovchipkaart) {
-        this.ovChipkaarten.add(ovchipkaart);
+        if(!this.ovChipkaarten.contains(ovchipkaart)) {
+            this.ovChipkaarten.add(ovchipkaart);
+        }
     }
 
     public void removeOVChipkaart(OVChipkaart ovchipkaart) {
-        if(this.ovChipkaarten != null) {
-            this.ovChipkaarten.remove(ovchipkaart);
-        }
+        this.ovChipkaarten.remove(ovchipkaart);
     }
 
     //*** Get/Set ***//
