@@ -34,7 +34,7 @@ public class OVChipkaart {
         if(this.producten.size() > 0) {
             returnString += " en heeft de producten: \n";
             for (Product p : this.producten) {
-                returnString += p.toString() + "\n";
+                returnString += p + "\n";
             }
         }
 
@@ -45,13 +45,13 @@ public class OVChipkaart {
     public void addProduct(Product product) {
         if(!this.producten.contains(product)) {
             this.producten.add(product);
-            product.addOVChipkaartNummer(this.kaartNummer);
+            product.addOVChipkaart(this);
         }
     }
 
     public void removeProduct(Product product) {
         this.producten.remove(product);
-        product.removeOVChipkaartNummer(this.kaartNummer);
+        product.removeOVChipkaart(this);
     }
 
     //*** Get/Set ***//

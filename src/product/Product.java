@@ -3,12 +3,14 @@ package product;
 import java.util.ArrayList;
 import java.util.List;
 
+import ovchipkaart.OVChipkaart;
+
 public class Product {
     private Integer productNummer;
     private String naam;
     private String beschrijving;
     private float prijs;
-    private List<Integer> ovChipkaartenNummers = new ArrayList<>();
+    private List<OVChipkaart> ovChipkaarten = new ArrayList<>();
 
     public Product(Integer productNummer, String naam, String beschrijving, float prijs) {
         this.productNummer = productNummer;
@@ -18,22 +20,31 @@ public class Product {
     }
 
     public String toString() {
-        return "Product #%d: %s (%s)".formatted(
+        String returnString = "Product #%d: %s (%s)".formatted(
             this.productNummer,
             this.naam,
             this.beschrijving
         );
+
+        if(this.ovChipkaarten.size() > 0) {
+            returnString += " en heeft de volgende OV Chipkaarten: \n";
+            for (OVChipkaart o : this.ovChipkaarten) {
+                returnString += o + "\n";
+            }
+        }
+
+        return returnString;
     }
 
     // As we can have multiple OV Chipkaarten, add these functions to add and remove OV Chipkaarten without getting and setting the whole list
-    public void addOVChipkaartNummer(Integer ovChipkaartNummer) {
-        if(!this.ovChipkaartenNummers.contains(ovChipkaartNummer)) {
-            this.ovChipkaartenNummers.add(ovChipkaartNummer);
+    public void addOVChipkaart(OVChipkaart ovChipkaart) {
+        if(!this.ovChipkaarten.contains(ovChipkaart)) {
+            this.ovChipkaarten.add(ovChipkaart);
         }
     }
 
-    public void removeOVChipkaartNummer(Integer ovChipkaartNummer) {
-        this.ovChipkaartenNummers.remove(ovChipkaartNummer);
+    public void removeOVChipkaart(OVChipkaart ovChipkaart) {
+        this.ovChipkaarten.remove(ovChipkaart);
     }
 
     //*** Get/Set ***//
@@ -69,11 +80,11 @@ public class Product {
         this.prijs = prijs;
     }
 
-    public List<Integer> getOVChipkaartenNummers() {
-        return ovChipkaartenNummers;
+    public List<OVChipkaart> getOVChipkaarten() {
+        return ovChipkaarten;
     }
 
-    public void setOVChipkaartenNummers(List<Integer> ovChipkaartenNummers) {
-        this.ovChipkaartenNummers = ovChipkaartenNummers;
+    public void setOVChipkaarten(List<OVChipkaart> ovChipkaarten) {
+        this.ovChipkaarten = ovChipkaarten;
     }
 }
