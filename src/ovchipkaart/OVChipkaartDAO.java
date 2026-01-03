@@ -2,11 +2,13 @@ package ovchipkaart;
 
 import java.util.List;
 
+import product.ProductDAO;
 import reiziger.Reiziger;
 import reiziger.ReizigerDAO;
 
 public interface OVChipkaartDAO {
     public void setReizigerDAO(ReizigerDAO reizigerDAO);
+    public void setProductDAO(ProductDAO productDAO);
     public boolean save(OVChipkaart ovchipkaart);
     public boolean update(OVChipkaart ovchipkaart);
     public boolean delete(OVChipkaart ovchipkaart);

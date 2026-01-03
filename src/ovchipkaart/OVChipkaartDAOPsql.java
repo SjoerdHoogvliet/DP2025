@@ -8,20 +8,49 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import product.Product;
+import product.ProductDAO;
 import reiziger.Reiziger;
 import reiziger.ReizigerDAO;
 
 public class OVChipkaartDAOPsql implements OVChipkaartDAO {
     private Connection connection;
     private ReizigerDAO reizigerDAO;
+    private ProductDAO productDAO;
 
     public OVChipkaartDAOPsql(Connection connection) {
         this.connection = connection;
     }
 
+    // Method for reducing boilerplate in getting associated Products
+    private List<Product> getAssociatedProducts(Integer kaartNummer) {
+        try {
+            String productenQuery = "SELECT * FROM ov_chipkaart_product WHERE kaart_nummer = ?";
+            PreparedStatement productenStatement = connection.prepareStatement(productenQuery);
+            productenStatement.setInt(1, kaartNummer);
+            ResultSet productenResults = productenStatement.executeQuery();
+
+            List<Product> producten = new ArrayList<>();
+            while (productenResults.next()) {
+                Product product = productDAO.findByProductNummer(productenResults.getInt("product_nummer"));
+                producten.add(product);
+            }
+            return producten;
+        } catch (Exception e) {
+            System.err.println("[OVChipkaartDAOPsql.getAssociatedProducts] " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @Override
     public void setReizigerDAO(ReizigerDAO reizigerDAO) {
         this.reizigerDAO = reizigerDAO;
+    }
+
+    @Override
+    public void setProductDAO(ProductDAO productDAO) {
+        this.productDAO = productDAO;
     }
 
     @Override
@@ -40,6 +69,20 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
             // Usually the OV Chipkaart is already set, however by doing this we are certain
             reizigerToUpdate.addOVChipkaart(ovChipkaart);
             reizigerDAO.update(reizigerToUpdate);
+
+            if (ovChipkaart.getProducten() != null) {
+                for (Product product : ovChipkaart.getProducten()) {
+                    // We are certain there is no conflict here as we just created the product, 
+                    // NOTE: status is nullable and we have no logic that will check whether the bought product is active or not therefore no status insert is done
+                    String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer last_update) VALUES (?, ?, ?)";
+                    PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
+                    relationStatement.setInt(2, product.getProductNummer());
+                    relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
+                    relationStatement.executeUpdate();
+                    relationStatement.close();
+                }
+            }
 
             statement.close();
             return true;
@@ -61,6 +104,20 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
             statement.setInt(4, ovChipkaart.getKaartNummer());
             statement.executeUpdate();
 
+            if (ovChipkaart.getProducten() != null) {
+                for (Product product : ovChipkaart.getProducten()) {
+                    // If we already inserted this relation it will conflict on the two primary keys, then we can update the last_update
+                    String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?) ON CONFLICT(kaart_nummer,product_nummer) DO UPDATE SET last_update = ?";
+                    PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
+                    relationStatement.setInt(2, product.getProductNummer());
+                    relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
+                    relationStatement.setDate(4, Date.valueOf(LocalDate.now()));
+                    relationStatement.executeUpdate();
+                    relationStatement.close();
+                }
+            }
+
             statement.close();
             return true;
         } catch (Exception e) {
@@ -73,6 +130,13 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
     @Override
     public boolean delete(OVChipkaart ovChipkaart) {
         try {
+            // Delete the Product relations first
+            String relationQuery = "DELETE FROM ov_chipkaart_product WHERE kaart_nummer = ?";
+            PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+            relationStatement.setInt(1, ovChipkaart.getKaartNummer());
+            relationStatement.executeUpdate();
+            relationStatement.close();
+
             String query = "DELETE FROM ov_chipkaart WHERE kaart_nummer = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, ovChipkaart.getKaartNummer());
@@ -109,6 +173,8 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         reizigerDAO.findById(results.getInt("reiziger_id"))
                 );
 
+                ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart));
+
                 results.close();
                 statement.close();
                 return ovChipkaart;
@@ -138,6 +204,9 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         results.getFloat("saldo"),
                         reiziger
                 );
+
+                ovChipkaart.setProducten(getAssociatedProducts(ovChipkaart.getKaartNummer()));
+                
                 ovChipkaarten.add(ovChipkaart);
             }
 
@@ -167,6 +236,9 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         results.getFloat("saldo"),
                         reizigerDAO.findById(results.getInt("reiziger_id"))
                 );
+
+                ovChipkaart.setProducten(getAssociatedProducts(ovChipkaart.getKaartNummer()));
+
                 ovChipkaarten.add(ovChipkaart);
             }
 

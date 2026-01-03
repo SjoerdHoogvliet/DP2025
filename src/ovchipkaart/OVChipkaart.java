@@ -1,7 +1,10 @@
 package ovchipkaart;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import product.Product;
 import reiziger.Reiziger;
 
 public class OVChipkaart {
@@ -10,6 +13,7 @@ public class OVChipkaart {
     private Integer klasse;
     private float saldo;
     private Reiziger reiziger;
+    private List<Product> producten = new ArrayList<>();
 
     public OVChipkaart(Integer kaartNummer, LocalDate geldigTot, Integer klasse, float saldo, Reiziger reiziger) {
         this.kaartNummer = kaartNummer;
@@ -20,12 +24,34 @@ public class OVChipkaart {
     }
 
     public String toString() {
-        return "OV Chipkaart #%d: met %.2f euro is geldig tot %s in klasse %d".formatted(
+        String returnString = "OV Chipkaart #%d: met %.2f euro is geldig tot %s in klasse %d".formatted(
             this.kaartNummer,
             this.saldo,
             this.geldigTot,
             this.klasse
         );
+
+        if(this.producten.size() > 0) {
+            returnString += " en heeft de producten: \n";
+            for (Product p : this.producten) {
+                returnString += p.toString() + "\n";
+            }
+        }
+
+        return returnString;
+    }
+
+    // As we can have multiple products, add these functions to add and remove Products without getting and setting the whole list
+    public void addProduct(Product product) {
+        if(!this.producten.contains(product)) {
+            this.producten.add(product);
+            product.addOVChipkaartNummer(this.kaartNummer);
+        }
+    }
+
+    public void removeProduct(Product product) {
+        this.producten.remove(product);
+        product.removeOVChipkaartNummer(this.kaartNummer);
     }
 
     //*** Get/Set ***//
@@ -67,5 +93,13 @@ public class OVChipkaart {
 
     public void setReiziger(Reiziger reiziger) {
         this.reiziger = reiziger;
+    }
+
+    public List<Product> getProducten() {
+        return producten;
+    }
+
+    public void setProducten(List<Product> producten) {
+        this.producten = producten;
     }
 }
