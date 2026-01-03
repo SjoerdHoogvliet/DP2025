@@ -14,6 +14,9 @@ import adres.AdresDAOPsql;
 import ovchipkaart.OVChipkaart;
 import ovchipkaart.OVChipkaartDAO;
 import ovchipkaart.OVChipkaartDAOPsql;
+import product.Product;
+import product.ProductDAO;
+import product.ProductDAOPsql;
 
 public class Main {
     public static void main(String[] args) {
@@ -24,17 +27,20 @@ public class Main {
             ReizigerDAO reizigerDAO = new ReizigerDAOPsql(connection);
             AdresDAO adresDAO = new AdresDAOPsql(connection);
             OVChipkaartDAO ovchipkaartDAO = new OVChipkaartDAOPsql(connection);
+            ProductDAO productDAO = new ProductDAOPsql(connection);
 
             // Assigning related DAOs to each other
             reizigerDAO.setAdresDAO(adresDAO);
             reizigerDAO.setOVChipkaartDAO(ovchipkaartDAO);
             adresDAO.setReizigerDAO(reizigerDAO);
             ovchipkaartDAO.setReizigerDAO(reizigerDAO);
+            ovchipkaartDAO.setProductDAO(productDAO);
 
             // Testing the DAOs
             testReizigerDAO(reizigerDAO);
             testAdresDAO(adresDAO, reizigerDAO);
             testOVChipkaartDAO(ovchipkaartDAO, reizigerDAO);
+            testProductDAO(productDAO, ovchipkaartDAO, reizigerDAO);
 
             closeConnection(connection);
         } catch (Exception e) {
@@ -222,5 +228,64 @@ public class Main {
 
         // Maak de database weer schoon
         reizigerDAO.delete(sietske);
+    }
+
+    /**
+     * P5. Product DAO: persistentie van een veel op veel relatie
+     *
+     * Deze methode test de CRUD-functionaliteit van de Product DAO
+     *
+     * @throws SQLException
+     */
+    public static void testProductDAO(ProductDAO productDAO, OVChipkaartDAO ovchipkaartDAO, ReizigerDAO reizigerDAO) throws SQLException {
+        System.out.println("\n---------- Test ProductDAO -------------");
+        
+        // Haal alle producten op uit de database
+        List<Product> producten = productDAO.findAll();
+        System.out.println("[Test] ProductDAO.findAll() geeft de volgende producten:");
+        for (Product p : producten) {
+            System.out.println(p);
+        }
+        System.out.println();
+
+        // Breng Sietske terug in leven en maak een OV Chipkaart voor hem
+        String gbdatum = "1981-03-14";
+        Reiziger sietske = new Reiziger(77, "S", "", "Boers", LocalDate.parse(gbdatum));
+        reizigerDAO.save(sietske);
+        OVChipkaart sietskeOVChipkaart = new OVChipkaart(77, LocalDate.parse(gbdatum), 2, 100, sietske);
+        sietske.addOVChipkaart(sietskeOVChipkaart);
+        ovchipkaartDAO.save(sietskeOVChipkaart);
+
+        // Maak een nieuw product en voeg het toe aan de OV Chipkaart van Sietske
+        Product nieuwProduct = new Product(77, "Treinproduct", "Een product voor de trein", 10);
+        System.out.print("[Test] Eerst " + producten.size() + " producten, na ProductDAO.save() ");
+        productDAO.save(nieuwProduct);
+        System.out.println(productDAO.findAll().size() + " producten");
+        System.out.println();
+
+        // Haal het product op met findByProductNummer
+        Product productByNummer = productDAO.findByProductNummer(77);
+        System.out.println("[Test] Product met nummer 77: " + productByNummer);
+        System.out.println();
+
+        // Voeg het nieuwe product toe aan de OV Chipkaart van Sietske
+        sietskeOVChipkaart.addProduct(nieuwProduct);
+        ovchipkaartDAO.update(sietskeOVChipkaart);
+        System.out.println("[Test] Producten op Sietskes OV Chipkaart: ");
+        for (Product p : productDAO.findByOVChipkaart(sietskeOVChipkaart)) {
+            System.out.println(p);
+        }
+        System.out.println();
+
+        // Verwijder het nieuwe product uit de database
+        System.out.print("[Test] Eerst " + productDAO.findAll().size() + " producten, na ProductDAO.delete() ");
+        productDAO.delete(nieuwProduct);
+        System.out.println(productDAO.findAll().size() + " producten");
+        System.out.println();
+        System.out.println("[Test] Sietskes OV Chipkaart na de delete: " + ovchipkaartDAO.findByKaartNummer(77));
+
+        // Maak de database weer schoon
+        reizigerDAO.delete(sietske);
+        ovchipkaartDAO.delete(sietskeOVChipkaart);
     }
 }
