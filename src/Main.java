@@ -35,6 +35,7 @@ public class Main {
             adresDAO.setReizigerDAO(reizigerDAO);
             ovchipkaartDAO.setReizigerDAO(reizigerDAO);
             ovchipkaartDAO.setProductDAO(productDAO);
+            productDAO.setOVChipkaartDAO(ovchipkaartDAO);
 
             // Testing the DAOs
             testReizigerDAO(reizigerDAO);
@@ -264,7 +265,7 @@ public class Main {
         System.out.println();
 
         // Haal het product op met findByProductNummer
-        Product productByNummer = productDAO.findByProductNummer(77);
+        Product productByNummer = productDAO.findByProductNummer(77, true);
         System.out.println("[Test] Product met nummer 77: " + productByNummer);
         System.out.println();
 
@@ -272,7 +273,7 @@ public class Main {
         sietskeOVChipkaart.addProduct(nieuwProduct);
         ovchipkaartDAO.update(sietskeOVChipkaart);
         System.out.println("[Test] Producten op Sietskes OV Chipkaart: ");
-        for (Product p : productDAO.findByOVChipkaart(sietskeOVChipkaart)) {
+        for (Product p : productDAO.findByOVChipkaart(sietskeOVChipkaart, true)) {
             System.out.println(p);
         }
         System.out.println();
