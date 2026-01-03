@@ -22,27 +22,7 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
         this.connection = connection;
     }
 
-    // Method for reducing boilerplate in getting associated Products
-    private List<Product> getAssociatedProducts(Integer kaartNummer) {
-        try {
-            String productenQuery = "SELECT * FROM ov_chipkaart_product WHERE kaart_nummer = ?";
-            PreparedStatement productenStatement = connection.prepareStatement(productenQuery);
-            productenStatement.setInt(1, kaartNummer);
-            ResultSet productenResults = productenStatement.executeQuery();
-
-            List<Product> producten = new ArrayList<>();
-            while (productenResults.next()) {
-                Product product = productDAO.findByProductNummer(productenResults.getInt("product_nummer"));
-                producten.add(product);
-            }
-            return producten;
-        } catch (Exception e) {
-            System.err.println("[OVChipkaartDAOPsql.getAssociatedProducts] " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-
+    
     @Override
     public void setReizigerDAO(ReizigerDAO reizigerDAO) {
         this.reizigerDAO = reizigerDAO;
@@ -173,8 +153,8 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         reizigerDAO.findById(results.getInt("reiziger_id"))
                 );
 
-                ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart));
-
+                ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart, false));
+                
                 results.close();
                 statement.close();
                 return ovChipkaart;
@@ -185,6 +165,41 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<OVChipkaart> findByProduct(Product product, boolean includeProducten) {
+        try {
+            String query = "SELECT * FROM ov_chipkaart oc LEFT JOIN ov_chipkaart_product ocp ON ocp.kaart_nummer = oc.kaart_nummer WHERE ocp.product_nummer = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, product.getProductNummer());
+            ResultSet results = statement.executeQuery();
+
+            List<OVChipkaart> ovChipkaarten = new ArrayList<>();
+            while (results.next()) {
+                OVChipkaart ovChipkaart = new OVChipkaart(
+                        results.getInt("kaart_nummer"),
+                        LocalDate.parse(results.getString("geldig_tot")),
+                        results.getInt("klasse"),
+                        results.getFloat("saldo"),
+                        reizigerDAO.findById(results.getInt("reiziger_id"))
+                );
+
+                if(includeProducten) {
+                    ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart, false));
+                }
+
+                ovChipkaarten.add(ovChipkaart);
+            }
+
+            results.close();
+            statement.close();
+            return ovChipkaarten;
+        } catch (Exception e) {
+            System.err.println("[OVChipkaartDAOPsql.findByProduct] " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -205,7 +220,7 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         reiziger
                 );
 
-                ovChipkaart.setProducten(getAssociatedProducts(ovChipkaart.getKaartNummer()));
+                ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart, false));
                 
                 ovChipkaarten.add(ovChipkaart);
             }
@@ -237,7 +252,7 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
                         reizigerDAO.findById(results.getInt("reiziger_id"))
                 );
 
-                ovChipkaart.setProducten(getAssociatedProducts(ovChipkaart.getKaartNummer()));
+                ovChipkaart.setProducten(productDAO.findByOVChipkaart(ovChipkaart, false));
 
                 ovChipkaarten.add(ovChipkaart);
             }

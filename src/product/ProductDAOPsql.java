@@ -9,35 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ovchipkaart.OVChipkaart;
+import ovchipkaart.OVChipkaartDAO;
 
 public class ProductDAOPsql implements ProductDAO {
     private Connection connection;
+    private OVChipkaartDAO ovChipkaartDAO;
 
     public ProductDAOPsql(Connection connection) {
         this.connection = connection;
     }
 
-    // Method for getting all OV Chipkaart nummers for a product
-    public List<Integer> getAllOVChipkaartNummersForProduct(Integer product_nummer) {
-        try {
-            String query = "SELECT kaart_nummer FROM ov_chipkaart_product WHERE product_nummer = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, product_nummer);
-            ResultSet results = statement.executeQuery();
-
-            List<Integer> ids = new ArrayList<>();
-            while (results.next()) {
-                ids.add(results.getInt("kaart_nummer"));
-            }
-            results.close();
-            statement.close();
-
-            return ids;
-        } catch (Exception e) {
-            System.err.println("[ProductDAOPsql.getAllOVChipkaartIds] " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
+    @Override
+    public void setOVChipkaartDAO(OVChipkaartDAO ovChipkaartDAO) {
+        this.ovChipkaartDAO = ovChipkaartDAO;
     }
 
     @Override
@@ -52,13 +36,13 @@ public class ProductDAOPsql implements ProductDAO {
             statement.executeUpdate();
 
             // Persist the relation with the OV Chipkaart
-            if (product.getOVChipkaartenNummers() != null) {
-                for (Integer ovChipkaartNummer : product.getOVChipkaartenNummers()) {
+            if (product.getOVChipkaarten() != null) {
+                for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
                     // We are certain there is no conflict here as we just created the product, 
                     // NOTE: status is nullable and we have no logic that will check whether the bought product is active or not therefore no status insert is done
                     String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?)";
                     PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
-                    relationStatement.setInt(1, ovChipkaartNummer);
+                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
                     relationStatement.setInt(2, product.getProductNummer());
                     relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
                     relationStatement.executeUpdate();
@@ -87,7 +71,7 @@ public class ProductDAOPsql implements ProductDAO {
             statement.executeUpdate();
 
             // Persist the relation with the OV Chipkaart
-            if (product.getOVChipkaartenNummers() != null) {
+            if (product.getOVChipkaarten() != null) {
                 // First delete all existing relations with this product (as some relations may have been deleted)
                 String removeRelationsQuery = "DELETE FROM ov_chipkaart_product WHERE product_nummer = ?";
                 PreparedStatement removeRelationsStatement = connection.prepareStatement(removeRelationsQuery);
@@ -96,10 +80,10 @@ public class ProductDAOPsql implements ProductDAO {
                 removeRelationsStatement.close();
 
                 // Then insert the new relations
-                for (Integer ovChipkaartNummer : product.getOVChipkaartenNummers()) {
+                for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
                     String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?)";
                     PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
-                    relationStatement.setInt(1, ovChipkaartNummer);
+                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
                     relationStatement.setInt(2, product.getProductNummer());
                     relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
                     relationStatement.setDate(4, Date.valueOf(LocalDate.now()));
@@ -143,7 +127,7 @@ public class ProductDAOPsql implements ProductDAO {
     }
 
     @Override
-    public Product findByProductNummer(Integer product_nummer) {
+    public Product findByProductNummer(Integer product_nummer, boolean includeOVChipkaarten) {
         try {
             String query = "SELECT * FROM product WHERE product_nummer = ?";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -158,6 +142,10 @@ public class ProductDAOPsql implements ProductDAO {
                         results.getFloat("prijs")
                 );
 
+                if(includeOVChipkaarten) {
+                    product.setOVChipkaarten(ovChipkaartDAO.findByProduct(product, false));
+                }
+
                 results.close();
                 statement.close();
                 return product;
@@ -171,7 +159,7 @@ public class ProductDAOPsql implements ProductDAO {
     }
 
     @Override
-    public List<Product> findByOVChipkaart(OVChipkaart ovChipkaart) {
+    public List<Product> findByOVChipkaart(OVChipkaart ovChipkaart, boolean includeOVChipkaarten) {
         try {
             String query = "SELECT * FROM product p LEFT JOIN ov_chipkaart_product ocp ON p.product_nummer = ocp.product_nummer WHERE ocp.kaart_nummer = ?";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -187,8 +175,10 @@ public class ProductDAOPsql implements ProductDAO {
                         results.getFloat("prijs")
                 );
 
-                product.setOVChipkaartenNummers(getAllOVChipkaartNummersForProduct(product.getProductNummer()));
-
+                if(includeOVChipkaarten) {
+                    product.setOVChipkaarten(ovChipkaartDAO.findByProduct(product, false));
+                }
+                
                 products.add(product);
             }
             results.close();
@@ -217,7 +207,8 @@ public class ProductDAOPsql implements ProductDAO {
                         results.getString("beschrijving"),
                         results.getFloat("prijs")
                 );
-                product.setOVChipkaartenNummers(getAllOVChipkaartNummersForProduct(product.getProductNummer()));
+
+                product.setOVChipkaarten(ovChipkaartDAO.findByProduct(product, false));
 
                 products.add(product);
             }
