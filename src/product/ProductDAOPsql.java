@@ -1,10 +1,8 @@
 package product;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,17 +35,7 @@ public class ProductDAOPsql implements ProductDAO {
 
             // Persist the relation with the OV Chipkaart
             if (product.getOVChipkaarten() != null) {
-                for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
-                    // We are certain there is no conflict here as we just created the product, 
-                    // NOTE: status is nullable and we have no logic that will check whether the bought product is active or not therefore no status insert is done
-                    String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?)";
-                    PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
-                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
-                    relationStatement.setInt(2, product.getProductNummer());
-                    relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
-                    relationStatement.executeUpdate();
-                    relationStatement.close();
-                }
+                ovChipkaartDAO.saveRelationsForProduct(product);
             }
 
             statement.close();
@@ -70,27 +58,8 @@ public class ProductDAOPsql implements ProductDAO {
             statement.setInt(4, product.getProductNummer());
             statement.executeUpdate();
 
-            // Persist the relation with the OV Chipkaart
-            if (product.getOVChipkaarten() != null) {
-                // First delete all existing relations with this product (as some relations may have been deleted)
-                String removeRelationsQuery = "DELETE FROM ov_chipkaart_product WHERE product_nummer = ?";
-                PreparedStatement removeRelationsStatement = connection.prepareStatement(removeRelationsQuery);
-                removeRelationsStatement.setInt(1, product.getProductNummer());
-                removeRelationsStatement.executeUpdate();
-                removeRelationsStatement.close();
-
-                // Then insert the new relations
-                for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
-                    String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?)";
-                    PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
-                    relationStatement.setInt(1, ovChipkaart.getKaartNummer());
-                    relationStatement.setInt(2, product.getProductNummer());
-                    relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
-                    relationStatement.setDate(4, Date.valueOf(LocalDate.now()));
-                    relationStatement.executeUpdate();
-                    relationStatement.close();
-                }
-            }
+            // Let the owning side persist all relations ()
+            ovChipkaartDAO.updateRelationsForProduct(product);
 
             statement.close();
             return true;
@@ -104,12 +73,7 @@ public class ProductDAOPsql implements ProductDAO {
     @Override
     public boolean delete(Product product) {
         try {
-            // Delete the OV Chipkaart relations first
-            String relationQuery = "DELETE FROM ov_chipkaart_product WHERE product_nummer = ?";
-            PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
-            relationStatement.setInt(1, product.getProductNummer());
-            relationStatement.executeUpdate();
-            relationStatement.close();
+            ovChipkaartDAO.deleteRelationsForProduct(product);
 
             // Delete the product
             String query = "DELETE FROM product WHERE product_nummer = ?";

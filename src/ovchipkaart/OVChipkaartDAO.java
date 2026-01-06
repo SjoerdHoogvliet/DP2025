@@ -17,4 +17,9 @@ public interface OVChipkaartDAO {
     public List<OVChipkaart> findByProduct(Product product, boolean includeProducten);
     public List<OVChipkaart> findByReiziger(Reiziger reiziger);
     public List<OVChipkaart> findAll();
+
+    // As OVChipkaart is the owning side of the relationship, we need to persist the relations for product here
+    public void saveRelationsForProduct(Product product);
+    public void updateRelationsForProduct(Product product);
+    public void deleteRelationsForProduct(Product product);
 }

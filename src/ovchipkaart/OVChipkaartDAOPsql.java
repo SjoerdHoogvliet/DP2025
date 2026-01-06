@@ -266,4 +266,62 @@ public class OVChipkaartDAOPsql implements OVChipkaartDAO {
             return null;
         }
     }
+
+    // Functions for the relationship with the Product
+    @Override
+    public void saveRelationsForProduct(Product product) {
+        try {
+            for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
+                // We are certain there is no conflict here as we just created the product 
+                // NOTE: status is nullable and we have no logic that will check whether the bought product is active or not therefore no status insert is done
+                String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?)";
+                PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+                relationStatement.setInt(1, ovChipkaart.getKaartNummer());
+                relationStatement.setInt(2, product.getProductNummer());
+                relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
+                relationStatement.executeUpdate();
+                relationStatement.close();
+            }
+        } catch (Exception e) {
+            System.err.println("[OVChipkaartDAOPsql.saveRelationsForProduct] " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void updateRelationsForProduct(Product product) {
+        try {
+            // Delete the OV Chipkaart relations first
+            deleteRelationsForProduct(product);
+
+            for (OVChipkaart ovChipkaart : product.getOVChipkaarten()) {
+                String relationQuery = "INSERT INTO ov_chipkaart_product (kaart_nummer,product_nummer, last_update) VALUES (?, ?, ?) ON CONFLICT(kaart_nummer,product_nummer) DO UPDATE SET last_update = ?";
+                PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+                relationStatement.setInt(1, ovChipkaart.getKaartNummer());
+                relationStatement.setInt(2, product.getProductNummer());
+                relationStatement.setDate(3, Date.valueOf(LocalDate.now()));
+                relationStatement.setDate(4, Date.valueOf(LocalDate.now()));
+                relationStatement.executeUpdate();
+                relationStatement.close();
+            }
+        } catch (Exception e) {
+            System.err.println("[OVChipkaartDAOPsql.updateRelationsForProduct] " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void deleteRelationsForProduct(Product product) {
+        try {
+            String relationQuery = "DELETE FROM ov_chipkaart_product WHERE product_nummer = ?";
+            PreparedStatement relationStatement = connection.prepareStatement(relationQuery);
+            relationStatement.setInt(1, product.getProductNummer());
+            relationStatement.executeUpdate();
+            relationStatement.close();
+        } catch (Exception e) {
+            System.err.println("[OVChipkaartDAOPsql.deleteRelationsForProduct] " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 }
